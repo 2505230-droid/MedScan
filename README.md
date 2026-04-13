@@ -1,0 +1,2 @@
+# MedScan
+Medicine Label Translator
