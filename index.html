@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediScan — Medicine Label Translator</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ░░ BACKGROUND GRID ░░ -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+
+  <!-- ░░ HEADER ░░ -->
+  <header class="header">
+    <div class="header__logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="15" y="4" width="6" height="28" rx="3" fill="currentColor"/>
+          <rect x="4" y="15" width="28" height="6" rx="3" fill="currentColor"/>
+        </svg>
+      </div>
+      <span class="logo-text">Medi<em>Scan</em></span>
+    </div>
+    <nav class="header__nav">
+      <a href="#how" class="nav-link">How It Works</a>
+      <a href="#scan" class="nav-link nav-link--cta">Scan Now</a>
+    </nav>
+  </header>
+
+  <!-- ░░ HERO ░░ -->
+  <section class="hero" id="home">
+    <div class="hero__eyebrow">
+      <span class="badge">AI-Powered · OCR.space · GPT-4</span>
+    </div>
+    <h1 class="hero__title">
+      Understand Any<br/>
+      <span class="gradient-text">Medicine Label</span><br/>
+      Instantly.
+    </h1>
+    <p class="hero__subtitle">
+      Point your camera. Get plain‑English explanations of dosage,<br class="br-desktop"/>
+      warnings, and side effects — designed for everyone.
+    </p>
+    <div class="hero__cta">
+      <a href="#scan" class="btn btn--primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Scan a Label
+      </a>
+      <a href="#how" class="btn btn--ghost">See How It Works</a>
+    </div>
+    <div class="hero__stats">
+      <div class="stat">
+        <span class="stat__num">99.2%</span>
+        <span class="stat__label">OCR Accuracy</span>
+      </div>
+      <div class="stat__divider"></div>
+      <div class="stat">
+        <span class="stat__num">&lt; 3s</span>
+        <span class="stat__label">Response Time</span>
+      </div>
+      <div class="stat__divider"></div>
+      <div class="stat">
+        <span class="stat__num">50+</span>
+        <span class="stat__label">Languages Supported</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ HOW IT WORKS ░░ -->
+  <section class="how-it-works" id="how">
+    <div class="section-header">
+      <p class="section-eyebrow">The Pipeline</p>
+      <h2 class="section-title">Three Steps to Clarity</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step__num">01</div>
+        <div class="step__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="32" height="32" rx="6" stroke="currentColor" stroke-width="2"/>
+            <circle cx="24" cy="24" r="8" stroke="currentColor" stroke-width="2"/>
+            <circle cx="24" cy="24" r="3" fill="currentColor"/>
+            <path d="M8 18H4M8 30H4M40 18H44M40 30H44M18 8V4M30 8V4M18 40V44M30 40V44" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Capture</h3>
+        <p class="step__desc">Use your device camera or upload an image. Google ML Kit optimizes frame quality in real-time.</p>
+        <div class="step__tech">Google ML Kit</div>
+      </div>
+      <div class="step__arrow">
+        <svg viewBox="0 0 40 12" fill="none"><path d="M0 6H38M33 1L38 6L33 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="step">
+        <div class="step__num">02</div>
+        <div class="step__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="10" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 18h20M14 24h14M14 30h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M36 30l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Extract</h3>
+        <p class="step__desc">OCR.space Engine 2 reads every character on the label with high-accuracy text detection.</p>
+        <div class="step__tech">OCR.space API</div>
+      </div>
+      <div class="step__arrow">
+        <svg viewBox="0 0 40 12" fill="none"><path d="M0 6H38M33 1L38 6L33 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="step">
+        <div class="step__num">03</div>
+        <div class="step__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="16" stroke="currentColor" stroke-width="2"/>
+            <path d="M17 24c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="28" r="3" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Explain</h3>
+        <p class="step__desc">GPT-4 translates dense medical text into simple, friendly language anyone can understand.</p>
+        <div class="step__tech">OpenAI GPT-4</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ SCAN SECTION ░░ -->
+  <section class="scan-section" id="scan">
+    <div class="scan-container">
+
+      <!-- LEFT PANEL: Input -->
+      <div class="panel panel--input">
+        <div class="panel__header">
+          <div class="panel__indicator"></div>
+          <span>Input</span>
+          <span class="panel__mode" id="modeLabel">Camera Mode</span>
+        </div>
+
+        <!-- Tab switcher -->
+        <div class="tabs">
+          <button class="tab tab--active" id="tabCamera" onclick="switchTab('camera')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+          </button>
+          <button class="tab" id="tabUpload" onclick="switchTab('upload')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+          </button>
+        </div>
+
+        <!-- Camera View -->
+        <div class="capture-area" id="cameraPane">
+          <div class="camera-frame">
+            <div class="camera-corner tl"></div>
+            <div class="camera-corner tr"></div>
+            <div class="camera-corner bl"></div>
+            <div class="camera-corner br"></div>
+            <video id="videoFeed" autoplay playsinline muted></video>
+            <canvas id="captureCanvas" style="display:none;"></canvas>
+            <div class="scan-line" id="scanLine"></div>
+            <div class="camera-placeholder" id="cameraPlaceholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <p>Camera not started</p>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <button class="btn btn--primary" id="startCameraBtn" onclick="startCamera()">Start Camera</button>
+            <button class="btn btn--secondary" id="captureBtn" onclick="captureFrame()" style="display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+              Capture
+            </button>
+            <button class="btn btn--ghost" id="stopCameraBtn" onclick="stopCamera()" style="display:none;">Stop</button>
+          </div>
+        </div>
+
+        <!-- Upload View -->
+        <div class="capture-area" id="uploadPane" style="display:none;">
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)" />
+            <div class="upload-zone__inner">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p class="upload-zone__title">Drop image here</p>
+              <p class="upload-zone__sub">or click to browse · JPG, PNG, WEBP</p>
+            </div>
+            <img id="uploadPreview" class="upload-preview" src="" alt="Preview" style="display:none;" />
+          </div>
+        </div>
+
+        <!-- Captured Preview -->
+        <div id="capturedPreviewWrap" style="display:none;" class="captured-preview-wrap">
+          <p class="preview-label">Captured Image</p>
+          <img id="capturedPreview" src="" alt="Captured" class="captured-preview" />
+          <button class="btn btn--ghost btn--sm" onclick="resetCapture()">Retake</button>
+        </div>
+
+        <!-- API Config -->
+        <div class="api-config">
+          <details>
+            <summary class="api-config__toggle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+              API Configuration
+            </summary>
+            <div class="api-config__body">
+              <div class="api-field">
+                <label>OCR.space API Key</label>
+                <input type="password" id="ocrApiKey" placeholder="helloworld or your key..." class="api-input" />
+              </div>
+              <div class="api-field">
+                <label>OpenAI API Key</label>
+                <input type="password" id="openaiApiKey" placeholder="sk-..." class="api-input" />
+              </div>
+              <p class="api-note">Keys are saved in your browser and auto-filled on return. &nbsp;<button type="button" onclick="clearApiKeys()" style="background:none;border:none;color:var(--red);font-size:0.72rem;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline;">Clear saved keys</button></p>
+            </div>
+          </details>
+        </div>
+
+        <button class="btn btn--analyze" id="analyzeBtn" onclick="analyzeLabel()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+          Analyze Label
+        </button>
+      </div>
+
+      <!-- RIGHT PANEL: Results -->
+      <div class="panel panel--results">
+        <div class="panel__header">
+          <div class="panel__indicator panel__indicator--green"></div>
+          <span>Results</span>
+          <span class="panel__badge" id="resultBadge" style="display:none;">Ready</span>
+        </div>
+
+        <!-- Idle State -->
+        <div class="results-idle" id="resultsIdle">
+          <div class="idle-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <path d="M22 32h20M32 22v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="idle-title">No Label Scanned Yet</p>
+          <p class="idle-sub">Capture or upload a medicine label to get your plain-English explanation.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="results-loading" id="resultsLoading" style="display:none;">
+          <div class="loading-steps">
+            <div class="loading-step" id="lstep1">
+              <div class="loading-step__dot"></div>
+              <span>Extracting text with OCR.space…</span>
+            </div>
+            <div class="loading-step" id="lstep2">
+              <div class="loading-step__dot"></div>
+              <span>Analyzing with GPT-4…</span>
+            </div>
+            <div class="loading-step" id="lstep3">
+              <div class="loading-step__dot"></div>
+              <span>Formatting results…</span>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="results-error" id="resultsError" style="display:none;">
+          <div class="error-icon">⚠</div>
+          <p class="error-title" id="errorTitle">Something went wrong</p>
+          <p class="error-msg" id="errorMsg"></p>
+          <button class="btn btn--ghost btn--sm" onclick="resetResults()">Try Again</button>
+        </div>
+
+        <!-- Result Cards -->
+        <div class="result-cards" id="resultCards" style="display:none;">
+
+          <!-- Raw OCR -->
+          <details class="result-raw">
+            <summary>Raw OCR Text <span class="badge badge--sm">OCR.space</span></summary>
+            <pre id="rawOcrText"></pre>
+          </details>
+
+          <!-- Medicine Name -->
+          <div class="result-card result-card--name" id="cardName" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--pill">💊</div>
+              <div>
+                <p class="result-card__eyebrow">Medicine</p>
+                <h3 class="result-card__title" id="medicineName">—</h3>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dosage -->
+          <div class="result-card" id="cardDosage" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--dose">⏱</div>
+              <p class="result-card__eyebrow">How to Take It</p>
+            </div>
+            <p class="result-card__body" id="dosageText"></p>
+          </div>
+
+          <!-- Side Effects -->
+          <div class="result-card" id="cardSideEffects" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--warn">⚡</div>
+              <p class="result-card__eyebrow">Possible Side Effects</p>
+            </div>
+            <ul class="side-effects-list" id="sideEffectsList"></ul>
+          </div>
+
+          <!-- Warnings -->
+          <div class="result-card result-card--warning" id="cardWarnings" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--alert">🚫</div>
+              <p class="result-card__eyebrow">Important Warnings</p>
+            </div>
+            <p class="result-card__body" id="warningsText"></p>
+          </div>
+
+          <!-- Storage -->
+          <div class="result-card" id="cardStorage" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--store">📦</div>
+              <p class="result-card__eyebrow">How to Store</p>
+            </div>
+            <p class="result-card__body" id="storageText"></p>
+          </div>
+
+          <!-- Plain Summary -->
+          <div class="result-card result-card--summary" id="cardSummary" style="display:none;">
+            <div class="result-card__header">
+              <div class="result-icon result-icon--summary">✦</div>
+              <p class="result-card__eyebrow">Simple Summary</p>
+            </div>
+            <p class="result-card__body" id="summaryText"></p>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="disclaimer">
+            <p>⚕ This is an AI-generated explanation for informational purposes only. Always consult a licensed pharmacist or doctor before taking any medication.</p>
+          </div>
+
+          <button class="btn btn--ghost btn--sm" style="margin-top:8px;" onclick="resetResults()">Scan Another</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="footer">
+    <div class="footer__logo">
+      <span class="logo-text logo-text--sm">Medi<em>Scan</em></span>
+    </div>
+    <p class="footer__copy">Built with OCR.space · OpenAI GPT-4 · ML Kit &nbsp;·&nbsp; Not a substitute for medical advice.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
