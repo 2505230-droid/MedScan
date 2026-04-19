@@ -472,42 +472,7 @@ details summary::-webkit-details-marker { display: none; }
   background: var(--bg);
 }
 
-/* ── API Config ──────────────────────────────────────────────── */
-.api-config {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.api-config__toggle {
-  display: flex; align-items: center; gap: 8px;
-  padding: 12px 16px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.api-config__toggle:hover { color: var(--text-primary); }
-.api-config__body {
-  padding: 14px 16px;
-  border-top: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 12px;
-}
-.api-field { display: flex; flex-direction: column; gap: 6px; }
-.api-field label { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
-.api-input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 12px;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-}
-.api-input:focus { border-color: var(--border-2); }
-.api-note { font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; }
+
 
 /* ── Results ─────────────────────────────────────────────────── */
 .results-idle, .results-loading, .results-error {

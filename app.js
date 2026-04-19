@@ -3,7 +3,7 @@
  * Architecture:
  *   1. Google ML Kit (camera capture via WebRTC — browser equivalent)
  *   2. OCR.space API (OCR / text extraction)
- *   3. OpenAI GPT-4 (medical text understanding → plain English)
+ *   3. Google Gemini 2.5 Flash API (medical text understanding → plain English)
  */
 
 "use strict";
@@ -141,43 +141,16 @@ function readFileAsBase64(file) {
   });
 })();
 
-/* ─── API Key Persistence (localStorage) ─────────────────────── */
-function saveApiKeys() {
-  const ocrKey    = document.getElementById("ocrApiKey").value.trim();
-  const openaiKey = document.getElementById("openaiApiKey").value.trim();
-  if (ocrKey)    localStorage.setItem("mediscan_ocr_key",    ocrKey);
-  if (openaiKey) localStorage.setItem("mediscan_openai_key", openaiKey);
-}
-
-function loadApiKeys() {
-  const ocrKey    = localStorage.getItem("mediscan_ocr_key");
-  const openaiKey = localStorage.getItem("mediscan_openai_key");
-  if (ocrKey)    document.getElementById("ocrApiKey").value    = ocrKey;
-  if (openaiKey) document.getElementById("openaiApiKey").value = openaiKey;
-}
-
-function clearApiKeys() {
-  localStorage.removeItem("mediscan_ocr_key");
-  localStorage.removeItem("mediscan_openai_key");
-  document.getElementById("ocrApiKey").value    = "";
-  document.getElementById("openaiApiKey").value = "";
-}
+/* ─── Hardcoded API Keys ─────────────────────────────────────── */
+const CONFIG = {
+  OCR_KEY    : "K87714546788957",
+  GEMINI_KEY : "AIzaSyBBw9MGOHj_Tn8gK9bmQ_aMGKNGPPq5XLw",
+};
 
 /* ─── Main Analysis Pipeline ─────────────────────────────────── */
 async function analyzeLabel() {
-  const ocrApiKey = document.getElementById("ocrApiKey").value.trim();
-  const openaiKey = document.getElementById("openaiApiKey").value.trim();
-
-  if (!ocrApiKey || !openaiKey) {
-    showError(
-      "API Keys Required",
-      "Please expand the API Configuration panel and enter your OCR.space API key and OpenAI API key."
-    );
-    return;
-  }
-
-  // Persist keys so they survive refresh/reopen
-  saveApiKeys();
+  const ocrApiKey   = CONFIG.OCR_KEY;
+  const geminiKey   = CONFIG.GEMINI_KEY;
 
   const imageBase64 =
     state.activeTab === "camera"
@@ -206,14 +179,17 @@ async function analyzeLabel() {
       throw new Error("Could not extract text from the image. Please ensure the label is in focus and well-lit.");
     }
 
-    // ── Step 2: GPT-4 Medical Analysis ─────────────────────────
+    // Fix common OCR misreads before analysis
+    const cleanedText = fixOcrTypos(ocrText);
+
+    // ── Step 2: Gemini Medical Analysis ────────────────────────
     setLoadingStep(2);
-    const analysisJson = await runGPT4Analysis(ocrText, openaiKey);
+    const analysisJson = await runGeminiAnalysis(cleanedText, geminiKey);
 
     // ── Step 3: Render results ──────────────────────────────────
     setLoadingStep(3);
     await sleep(600);
-    renderResults(ocrText, analysisJson);
+    renderResults(ocrText, analysisJson); // show raw OCR in panel, cleaned data in cards
 
   } catch (err) {
     console.error("MediScan error:", err);
@@ -267,64 +243,309 @@ async function runOCRSpaceOCR(base64Image, apiKey) {
   return fullText;
 }
 
-/* ─── OpenAI GPT-4 Analysis ──────────────────────────────────── */
-async function runGPT4Analysis(ocrText, apiKey) {
-  const systemPrompt = `You are MediScan, a friendly medical assistant helping low-literacy users understand medicine labels.
+/* ─── Google Gemini API ──────────────────────────────────────────
+ *
+ * Uses Gemini 1.5 Flash via the Generative Language REST API.
+ * Sends the cleaned OCR text and asks Gemini to return a structured
+ * JSON object with: medicine_name, dosage, side_effects, warnings,
+ * storage, plain_summary — all in plain, simple English.
+ *
+ * Endpoint: POST /v1beta/models/gemini-1.5-flash:generateContent
+ * ────────────────────────────────────────────────────────────── */
 
-Given raw OCR text from a medicine label, extract and explain the following in SIMPLE, plain English — as if explaining to someone with a 5th-grade reading level. Avoid medical jargon. Use short sentences.
+async function runGeminiAnalysis(ocrText, apiKey) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-Respond ONLY with a valid JSON object with this exact schema (no markdown, no preamble):
+  // Concise prompt — keeps token count low to avoid free-tier TPM limits
+  const prompt = `You are a medical assistant. Extract info from this medicine label OCR text and return ONLY a JSON object (no markdown, no code fences, no extra text):
 {
-  "medicine_name": "Name of the medicine",
-  "dosage": "Plain-English explanation of how much to take and when (e.g., 'Take 1 tablet by mouth, 2 times a day, after meals.')",
-  "side_effects": ["Side effect 1 in simple words", "Side effect 2", "..."],
-  "warnings": "Simple plain-English warnings (e.g., 'Do not drive after taking this. Keep away from children.')",
-  "storage": "Simple storage instructions (e.g., 'Keep in a cool, dry place. Do not refrigerate.')",
-  "plain_summary": "A 2–3 sentence friendly summary of this medicine that a child or elderly person could understand."
+  "medicine_name": "Brand name preferred over generic. E.g. Linvas not Saroglitazar",
+  "dosage": "Simple plain-English dosage instructions",
+  "side_effects": ["effect 1", "effect 2"],
+  "warnings": "Simple plain-English warnings",
+  "storage": "Simple storage instructions",
+  "plain_summary": "2-3 simple sentences a child can understand"
+}
+Use null for missing fields. Never invent data. Prefer brand name for medicine_name.
+
+Label text:
+${ocrText.slice(0, 1500)}`;
+
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 800 },
+  };
+
+  // Retry with exponential backoff for 429 rate limits
+  const MAX_RETRIES = 4;
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(endpoint, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(body),
+    });
+
+    if (response.status === 429) {
+      const waitMs = Math.min(3000 * Math.pow(2, attempt - 1), 20000);
+      if (attempt < MAX_RETRIES) {
+        const stepEl = document.querySelector("#lstep2 span");
+        if (stepEl) stepEl.textContent = `Rate limited — retrying in ${waitMs / 1000}s…`;
+        await sleep(waitMs);
+        continue;
+      }
+      lastError = new Error("Gemini API is busy. Please wait 30 seconds and try again.");
+      break;
+    }
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      if (response.status === 403) throw new Error("Invalid Google Gemini API key. Please check and try again.");
+      throw new Error(err?.error?.message || `Gemini API error: ${response.status}`);
+    }
+
+    const data     = await response.json();
+    const rawText  = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      const match = jsonText.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+      else throw new Error("Gemini returned an unexpected format. Please try again.");
+    }
+
+    if (parsed.side_effects && !Array.isArray(parsed.side_effects)) {
+      parsed.side_effects = String(parsed.side_effects).split(/[,;]/).map(s => s.trim()).filter(Boolean);
+    }
+
+    if (!parsed.medicine_name || parsed.medicine_name === "null") {
+      parsed.medicine_name = extractMedicineName(ocrText);
+    }
+
+    return parsed;
+  }
+
+  throw lastError || new Error("Gemini API failed after retries. Please try again.");
 }
 
-If a field is not found in the label, use null for that field.
-Never make up dosage or side effects — only use what's on the label.`;
+/* ─── Label Text Parsers (regex fallbacks) ───────────────────── */
 
-  const userPrompt = `Here is the raw OCR text from a medicine label:\n\n---\n${ocrText}\n---\n\nPlease analyze this and respond with the JSON.`;
+/**
+ * Fixes common OCR misreads on medicine labels before analysis.
+ */
+function fixOcrTypos(text) {
+  return text
+    .replace(/\bdiy\b/gi,  "dry")
+    .replace(/\bIight\b/gi, "light")
+    .replace(/\bmoisure\b/gi, "moisture")
+    .replace(/\btemperture\b/gi, "temperature")
+    .replace(/\bprolect\b/gi, "protect")
+    .replace(/\bphsyician\b/gi, "physician")
+    .replace(/\bprescribtion\b/gi, "prescription");
+}
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user",   content: userPrompt },
-      ],
-      max_tokens: 1000,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    }),
-  });
+/**
+ * Extracts the medicine/drug name from OCR label text.
+ *
+ * Priority order:
+ *  0. Brand name — short word with ® / ™, or next to "X Tablets" count line
+ *  1. "GenericName Tablets/Capsules IP/BP" pattern (full line match)
+ *  2. Standalone brand+dose code on its own line e.g. "P-650"
+ *  3. Short clean Title Case line that passes all blocklist checks
+ *
+ * Brand always beats generic — "Linvas" beats "Saroglitazar".
+ */
+function extractMedicineName(text) {
 
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    const msg = errData?.error?.message || `OpenAI API error: ${response.status}`;
-    if (response.status === 401) throw new Error("Invalid OpenAI API key. Please check and try again.");
-    if (response.status === 429) throw new Error("OpenAI rate limit reached. Please wait a moment and try again.");
-    throw new Error(msg);
+  // ── Blocklist: reject anything matching these as a medicine name ──
+  const REJECT = /dosing|interval|dose|dosage|minimum|maximum|excipient|q\.s|composition|each\s+tablet|each\s+uncoated|contains?|manufactured|store|storage|warning|caution|keep\s+out|keep\s+away|should\s+not|not\s+be|do\s+not|analgesic|antipyretic|anti\-?pyretic|hours|daily|times|4000|650\s*mg|mfg|batch|exp\b|lic\b|reg\b|plot|floor|india|chennai|mumbai|delhi|sikkim|tamil|gujarat|maharashtra|limited|private|laboratory|laboratories|swiss|garner|genexisa|sciences|apex\s+lab|lupin|zydus|cipla|sun\s+pharma|marketed|manufactured/i;
+
+  function isValidName(s) {
+    if (!s || s.length < 2 || s.length > 45) return false;
+    if (/^\d/.test(s))  return false;
+    if (/:/.test(s))    return false;
+    if (REJECT.test(s)) return false;
+    return true;
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "{}";
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
-  try {
-    return JSON.parse(content);
-  } catch {
-    // Try to extract JSON from response if parsing fails
-    const match = content.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error("Failed to parse GPT-4 response. Please try again.");
+  // ── Pass 0: Brand name with ® or ™ symbol ─────────────────────
+  // Most reliable signal — "Linvas®", "Crocin®", "Dolo®"
+  // Also catches "Linvas" when ® is on the same line as tablet count
+  const brandSymbolRe = /([A-Za-z][A-Za-z\-]{1,20})\s*[®™°]/;
+  for (const line of lines) {
+    const m = line.match(brandSymbolRe);
+    if (!m) continue;
+    const candidate = m[1].trim();
+    if (isValidName(candidate)) return toTitleCase(candidate);
   }
+
+  // ── Pass 0b: "BrandName  X Tablets" on one line (no ® needed) ──
+  // e.g. "Linvas  10 Tablets", "Dolo 15 Tablets"
+  const brandCountRe = /^([A-Za-z][A-Za-z\-]{1,20})\s+\d{1,3}\s+tablets?/i;
+  for (const line of lines) {
+    const m = line.match(brandCountRe);
+    if (!m) continue;
+    const candidate = m[1].trim();
+    if (isValidName(candidate)) return toTitleCase(candidate);
+  }
+
+  // ── Pass 1: "GenericName Tablets/Capsules IP/BP" full line ─────
+  const tabletRe = /^([A-Za-z][A-Za-z\s\-]{1,35}?)\s+(?:tablets?|capsules?|syrup|injection|suspension|drops?|cream|gel|ointment|solution)\b/i;
+  for (const line of lines) {
+    const m = line.match(tabletRe);
+    if (!m) continue;
+    const candidate = m[1].trim();
+    if (isValidName(candidate) && !/dosage|dose|interval|minimum|maximum|adult|child/i.test(candidate)) {
+      return toTitleCase(candidate);
+    }
+  }
+
+  // ── Pass 2: Standalone brand+dose code e.g. "P-650", "Dolo-650" ─
+  const brandRe = /^([A-Za-z][A-Za-z\-]{1,15})\s*[-–]?\s*(\d{2,4})(?:\s*(?:mg|ml|mcg|g))?\s*$/i;
+  for (const line of lines) {
+    const m = line.match(brandRe);
+    if (!m) continue;
+    if (isValidName(m[1])) return toTitleCase(`${m[1]} ${m[2]}`);
+  }
+
+  // ── Pass 3: Short clean Title Case proper noun ────────────────
+  for (const line of lines) {
+    if (line.length < 3 || line.length > 40) continue;
+    if (!/^[A-Z]/.test(line)) continue;
+    if (/[:\-\d]/.test(line.charAt(line.length - 1))) continue;
+    if (/\d/.test(line) && !/^[A-Za-z]+-\d+$/.test(line)) continue;
+    if (!isValidName(line)) continue;
+    if (/\b(interval|dosing|minimum|maximum|every|hours?|times?|daily|each|uncoated|tablets?|capsules?)\b/i.test(line)) continue;
+    return toTitleCase(line);
+  }
+
+  return "Unknown Medicine";
+}
+
+/**
+ * Extracts dosage/administration instructions from label text.
+ */
+function extractDosage(text) {
+  const patterns = [
+    /take\s+[\w\s,]+(?:tablet|capsule|pill|drop|ml|mg|teaspoon|spoon)[^\.\n]*/gi,
+    /(?:dose|dosage)[:\s]+[^\.\n]{5,120}/gi,
+    /(?:adults?|children?)[:\s]+[^\.\n]{5,120}/gi,
+    /\d+\s*(?:tablet|capsule|pill|drop|ml)\s+[\w\s]+(?:daily|day|hour|week|meal|food)[^\.\n]*/gi,
+    /(?:oral|by mouth|orally)[^\.\n]{0,100}/gi,
+  ];
+  const found = [];
+  for (const pattern of patterns) {
+    const matches = text.match(pattern) || [];
+    found.push(...matches.map(m => m.trim()));
+  }
+  if (!found.length) return extractFirstMentionOf(text, ["dose", "dosage", "directions", "administration"]);
+  return toReadableSentences([...new Set(found)].slice(0, 3).join(". "));
+}
+
+/**
+ * Extracts warnings from label text.
+ */
+function extractWarnings(text) {
+  const patterns = [
+    /(?:warning|caution|do not|avoid|contraindic|not recommended|keep out|keep away)[^\.\n]{5,200}/gi,
+    /(?:allerg|consult\s+(?:a\s+)?(?:doctor|physician|pharmacist))[^\.\n]{5,150}/gi,
+    /(?:stop\s+(?:using|taking)|discontinue)[^\.\n]{5,150}/gi,
+  ];
+  const found = [];
+  for (const pattern of patterns) {
+    const matches = text.match(pattern) || [];
+    found.push(...matches.map(m => m.trim()));
+  }
+  if (!found.length) return extractFirstMentionOf(text, ["warning", "caution", "contraindication"]);
+  return toReadableSentences([...new Set(found)].slice(0, 3).join(". "));
+}
+
+/**
+ * Extracts storage instructions from label text.
+ */
+function extractStorage(text) {
+  const patterns = [
+    /store(?:d)?\s+[^\.\n]{5,120}/gi,
+    /keep\s+(?:in|at|below|between|away)[^\.\n]{5,120}/gi,
+    /(?:temperature|cool|dry|refrigerat|light|moisture)[^\.\n]{5,100}/gi,
+  ];
+  const found = [];
+  for (const pattern of patterns) {
+    const matches = text.match(pattern) || [];
+    found.push(...matches.map(m => m.trim()));
+  }
+  if (!found.length) return extractFirstMentionOf(text, ["store", "storage", "keep"]);
+  return toReadableSentences([...new Set(found)].slice(0, 2).join(". "));
+}
+
+/**
+ * Fallback side-effect extraction from explicit label sections.
+ */
+function extractFallbackSideEffects(text) {
+  const sectionMatch = text.match(/(?:side\s*effects?|adverse\s*(?:effects?|reactions?))[:\s]+([^\n]{10,400})/i);
+  if (sectionMatch) {
+    return sectionMatch[1]
+      .split(/[,;\/]/)
+      .map(s => toPlainEnglish(s.trim()))
+      .filter(s => s.length > 2)
+      .slice(0, 8);
+  }
+  const symptomWords = [
+    "nausea","vomiting","dizziness","headache","drowsiness","rash","itching",
+    "dry mouth","constipation","diarrhea","stomach pain","fatigue","insomnia",
+    "blurred vision","sweating","palpitations","swelling","fever","allergic reaction"
+  ];
+  return symptomWords.filter(w => new RegExp(w, "i").test(text));
+}
+
+/* ─── Plain-English Helpers ──────────────────────────────────── */
+
+function buildPlainSummary(name, dosage, sideEffects, warnings) {
+  const parts = [];
+  if (name && name !== "Unknown Medicine") {
+    parts.push(`${name} is a medicine that you should take as directed on the label.`);
+  } else {
+    parts.push("This medicine should be taken exactly as directed on the label.");
+  }
+  if (dosage) parts.push(`Remember: ${dosage.split(".")[0]}.`);
+  if (sideEffects?.length) {
+    parts.push(`It may cause some effects like ${sideEffects.slice(0, 3).join(", ")}. Talk to your doctor if anything feels wrong.`);
+  }
+  if (warnings) parts.push("Always read the warnings and ask your pharmacist if you are unsure.");
+  return parts.join(" ");
+}
+
+function toPlainEnglish(text) {
+  if (!text) return "";
+  // Capitalize first letter, lowercase rest, trim punctuation
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase().replace(/[\.;:,]+$/, "").trim();
+}
+
+function toTitleCase(text) {
+  return text.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function toReadableSentences(text) {
+  // Ensure each sentence ends with a period, collapse extra spaces
+  return text
+    .replace(/\s{2,}/g, " ")
+    .replace(/([^.])\s*$/, "$1.")
+    .trim();
+}
+
+function extractFirstMentionOf(text, keywords) {
+  for (const kw of keywords) {
+    const re = new RegExp(`${kw}[:\\s]+([^\\n]{10,200})`, "i");
+    const m  = text.match(re);
+    if (m) return toReadableSentences(m[1].trim());
+  }
+  return null;
 }
 
 /* ─── UI: Loading ────────────────────────────────────────────── */
@@ -459,8 +680,6 @@ function sleep(ms) {
 
 /* ─── Smooth scroll for hero CTA ─────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
-  // Restore saved API keys from previous session
-  loadApiKeys();
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", function (e) {
       const target = document.querySelector(this.getAttribute("href"));
