@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MediScan — Medicine Label Translator</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2.5" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -122,8 +122,8 @@
           </svg>
         </div>
         <h3 class="step__title">Explain</h3>
-        <p class="step__desc">Google Gemini 1.5 Flash reads the label text and translates dense medical information into simple, friendly language anyone can understand.</p>
-        <div class="step__tech">Google Gemini API</div>
+        <p class="step__desc">Google Gemini 2.5 Flash analyzes the label text. If Gemini is unavailable, Hugging Face BART automatically takes over — zero downtime.</p>
+        <div class="step__tech">Gemini + HF Backup</div>
       </div>
     </div>
   </section>
@@ -234,7 +234,7 @@
             </div>
             <div class="loading-step" id="lstep2">
               <div class="loading-step__dot"></div>
-              <span>Analyzing with Google Gemini…</span>
+              <span>Analyzing with Gemini / HF backup…</span>
             </div>
             <div class="loading-step" id="lstep3">
               <div class="loading-step__dot"></div>
@@ -336,9 +336,10 @@
     <div class="footer__logo">
       <span class="logo-text logo-text--sm">Medi<em>Scan</em></span>
     </div>
-    <p class="footer__copy">Built with OCR.space · Google Gemini 2.5 Flash · ML Kit &nbsp;·&nbsp; Not a substitute for medical advice.</p>
+    <p class="footer__copy">Built with OCR.space · Gemini 2.5 Flash · HF Backup · ML Kit &nbsp;·&nbsp; Not a substitute for medical advice.</p>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="config.js?v=2.5"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 </html>
